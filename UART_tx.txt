@@ -1,0 +1,38 @@
+#include "main.h"
+
+void SystemClock_Config(void);
+
+char *str = "Magizhchi\r\n";
+
+int main(void)
+{
+  HAL_Init();
+
+  
+  RCC->APB2ENR |= (1<<4); 
+  RCC->AHB1ENR |= (1<<0);
+  
+  SystemClock_Config();
+
+
+  GPIOA->MODER &= ~(3 << (9 * 2));
+  GPIOA->MODER |= (2 << (9 * 2));
+
+  GPIOA->AFR[1] &= ~(0xF << (1 * 4));
+  GPIOA->AFR[1] |=  (7 << 4);
+
+
+  USART1->CR1 |= (1<<3); // TE Enable
+  USART1->BRR = 0x1A0B;  // 2400bps
+  USART1->CR1 |= (1<<13);  // UART Enable
+
+
+  while (1) 
+  {
+       while (*str)
+       {
+	  while (!(USART1->SR & (1<<7)));
+	  USART1->DR = *str++;  // Load data into the data register
+       }
+  }
+}
