@@ -1,0 +1,44 @@
+#include "main.h"
+
+
+static void MX_GPIO_Init(void);
+
+char Rx;
+
+int main(void)
+{
+
+  HAL_Init();
+
+  RCC->APB2ENR |= (1<<4);
+  RCC->AHB1ENR |= (1<<0);
+
+  SystemClock_Config();
+
+  GPIOA->MODER |= (2 << (10 * 2));
+  GPIOA->AFR[1] |=  (7 << 8);
+
+
+  USART1->CR1 |= (1<<2); // RE Enable
+  USART1->BRR = 0x1A0B;  // 2400bps
+  USART1->CR1 |= (1<<13);  // UART Enable
+
+
+  MX_GPIO_Init();
+
+
+  while (1)
+  {
+
+      while (!(USART1->SR & (1 << 5)));  // RXNE
+
+      Rx = USART1->DR;  // Read DR
+
+      if (Rx != '0'){
+	 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);     //Turns ON LED when any ASCII value is transmitted
+      }
+      else{
+	 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);     //Turns ON LED when '0' ASCII value is transmitted
+      }
+   }
+}
