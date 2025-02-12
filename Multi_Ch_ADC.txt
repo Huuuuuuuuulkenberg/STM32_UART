@@ -1,0 +1,47 @@
+#include "main.h"
+
+void SystemClock_Config(void);
+
+unsigned int CH0, CH1;
+
+int main(void)
+{
+
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  HAL_Init();
+
+  RCC->APB2ENR |= (1<<8);
+
+  SystemClock_Config();
+
+  GPIOA->MODER |= (3<<0); //CH0
+  GPIOA->MODER |= (3<<2); //CH1
+
+  ADC1->CR1 |= (1<<8); //SCAN ON
+  ADC1->CR2 |= (1<<1); //CONT. SCAN
+  ADC1->CR2 |= (1<<0); //ADC ON
+
+  ADC1->SQR1 = (1 << 20); //2conv.
+  ADC1->SQR3 = (0 << 0) | (1 << 5); //CH0↑ CH1↓
+  ADC1->SMPR2 = (0 << (3 * 0)) | (7 << (3 * 1)); //CH0-3cyc. & CH1-480cyc.
+
+
+
+  ADC1->CR2 |= (1<<10); // Both channels work together if this is not given.
+
+
+  while (1)
+  {
+	  ADC1->SR = 0;
+	  ADC1->CR2 |= (1<<30); //START CONVERSION
+
+	  while (!(ADC1->SR & (1<<10)));
+	  CH0 = ADC1->DR;
+
+	  while (!(ADC1->SR & (1<<10)));
+	  CH1 = ADC1->DR;
+
+	  HAL_Delay(2);
+  }
+}
